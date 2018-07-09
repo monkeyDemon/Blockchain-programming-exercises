@@ -13,7 +13,7 @@ $x^2$
 
  逻辑运算   | 含义           |
  ---------- | -------------- |
- $ \land  $ | 按位“与”       |
+ <a href="https://www.codecogs.com/eqnedit.php?latex=\land" target="_blank"><img src="https://latex.codecogs.com/gif.latex?\land" title="\land" /></a> | 按位“与”       |
  $ \neg  $  | 按位“补”       |
  $ \oplus $ | 按位“异或”     |
  $ S^{n} $  | 右移n个bit     |
