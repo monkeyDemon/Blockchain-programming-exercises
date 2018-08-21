@@ -13,10 +13,19 @@
 class CSHA256
 {
 private:
-    uint32_t s[8];
+    uint32_t s[8];            // 8个哈希初值，Initialize中进行初始化
+
+    // 缓冲区(SHA256以512bit为单位，一个block一个block的进行hash映射，因此缓冲区为64byte)
+    // 将待哈希的序列添加进缓冲区，每当缓冲区填满，进行一次变换，将缓冲区清空
     unsigned char buf[64];
+
+    // 记录曾经加入到缓冲区的总字节数
+    // 因此当全部数据写入后，bytes代表了待Hash的数据的总字节数
+    // 还可以通过对64取余可以判断当前缓冲区中存在的剩余数据的字节数
     uint64_t bytes;
 
+    // 这两个私有成员的含义不太好理解，可以通过阅读我写的博客更好的理解源代码
+    // https://blog.csdn.net/u011583927/article/details/80905740
 public:
     static const size_t OUTPUT_SIZE = 32;
 

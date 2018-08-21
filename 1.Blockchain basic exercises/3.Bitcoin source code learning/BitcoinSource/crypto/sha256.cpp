@@ -645,39 +645,57 @@ CSHA256::CSHA256() : bytes(0)
     sha256::Initialize(s);
 }
 
+// 将制定数据写入缓冲区中并处理
+// 对数据进行处理的方法为：每填满一个缓冲区，进行一次hash变换，未能填满缓冲区不进行额外操作
 CSHA256& CSHA256::Write(const unsigned char* data, size_t len)
 {
     const unsigned char* end = data + len;
-    size_t bufsize = bytes % 64;
-    if (bufsize && bufsize + len >= 64) {
+    size_t bufsize = bytes % 64;  // 缓冲区中已有的byte数(需一直维护使得该定义持续成立)
+
+    // 考虑到Write可能被多次调用，因此缓冲区中的可能存在剩余数据，即 bufsize!=0
+    if (bufsize && bufsize + len >= 64) {   // 缓冲区中已有一部分数据，且加上待拷贝的len个byte将会超出缓冲区大小
         // Fill the buffer, and process it.
+        // 将缓冲区填满（缓冲区现有byte字节，因此填充 64 - bufsize个字节进来就填满了）
         memcpy(buf + bufsize, data, 64 - bufsize);
         bytes += 64 - bufsize;
         data += 64 - bufsize;
         Transform(s, buf, 1);
         bufsize = 0;
     }
+
+    // 执行到这里有两种情况：
+    // 1.缓冲区有数据，但加上待写入的len个byte也填充不满缓冲区
+    // 2.缓冲区内为空(因为即使缓冲区不为空，也已在上一个if语句块中处理，将缓冲区填满并进行变换)
     if (end - data >= 64) {
-        size_t blocks = (end - data) / 64;
-        Transform(s, data, blocks);
+        // 有多少个 512-bits，就进行多少次Hash变换
+        size_t blocks = (end - data) / 64;  // 计算写入的数据有多少个完整的512bits块
+        Transform(s, data, blocks);         // 进行blocks次hash映射
         data += 64 * blocks;
         bytes += 64 * blocks;
     }
+
+    // 执行到这里，data中可能有少部分剩余数据待写入，但剩余数据不会超过64byte
     if (end > data) {
-        // Fill the buffer with what remains.
+        // Fill the buffer with what remains. 将剩余数据加入缓冲区就好
+        // 由于bufsize代表缓冲区中已存在的字节数，将剩余数据从 buf + bufsize 指向的位置开始拷贝
         memcpy(buf + bufsize, data, end - data);
         bytes += end - data;
     }
     return *this;
 }
 
+// Finalize 函数最终确定SHA-256的结果
+// 由于SHA-256算法最后需要完成填充数据的操作
+// 因此需要 Write + Finalize 的调用方法来计算SHA-256算法
 void CSHA256::Finalize(unsigned char hash[OUTPUT_SIZE])
 {
-    static const unsigned char pad[64] = {0x80};
-    unsigned char sizedesc[8];
-    WriteBE64(sizedesc, bytes << 3);
-    Write(pad, 1 + ((119 - (bytes % 64)) % 64));
-    Write(sizedesc, 8);
+    static const unsigned char pad[64] = {0x80};  // 第一步待填充的附加比特{1000 0000 0000 0000 ...}
+    unsigned char sizedesc[8];                    // 第二步待填充的数据长度值
+    WriteBE64(sizedesc, bytes << 3);              // 长度值为bytes*8
+    Write(pad, 1 + ((119 - (bytes % 64)) % 64));  // 填充附加比特
+    Write(sizedesc, 8);                           // 填充长度值
+
+    // 将哈希结果写入数组hash中
     WriteBE32(hash, s[0]);
     WriteBE32(hash + 4, s[1]);
     WriteBE32(hash + 8, s[2]);

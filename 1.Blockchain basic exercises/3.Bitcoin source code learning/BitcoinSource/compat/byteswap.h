@@ -40,7 +40,7 @@ inline uint16_t bswap_16(uint16_t x)
 #endif // HAVE_DECL_BSWAP16 == 0
 
 #if HAVE_DECL_BSWAP_32 == 0
-inline uint32_t bswap_32(uint32_t x)
+inline uint32_t bswap_32(uint32_t x)  // 四字节整数的大小端转换
 {
     return (((x & 0xff000000U) >> 24) | ((x & 0x00ff0000U) >>  8) |
             ((x & 0x0000ff00U) <<  8) | ((x & 0x000000ffU) << 24));

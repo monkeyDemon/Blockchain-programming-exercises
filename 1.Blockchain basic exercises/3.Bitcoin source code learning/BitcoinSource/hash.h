@@ -6,8 +6,8 @@
 #ifndef BITCOIN_HASH_H
 #define BITCOIN_HASH_H
 
-#include <crypto/ripemd160.h>
-#include <crypto/sha256.h>
+#include <crypto/ripemd160.h>    // ripemd160的底层实现
+#include <crypto/sha256.h>       // sha256的底层实现
 #include <prevector.h>
 #include <serialize.h>
 #include <uint256.h>
@@ -17,55 +17,71 @@
 
 typedef uint256 ChainCode;
 
-/** A hasher class for Bitcoin's 256-bit hash (double SHA-256). */
+/** A hasher class for Bitcoin's 256-bit hash (double SHA-256).
+*   封装了比特币 256-bit 哈希算法的类型
+*   注意！这个类计算的 Bitcoin 256 hash 通常被称为 SHA256d
+*   SHA256d != SHA-256, 实际上，SHA256d(x) = SHA256(SHA256(x))
+*/
 class CHash256 {
 private:
-    CSHA256 sha;
+    CSHA256 sha;   // 定义于`crypto/sha256.h`中
 public:
     static const size_t OUTPUT_SIZE = CSHA256::OUTPUT_SIZE;
 
+    // 完成HASH映射，需配合Write()函数使用
     void Finalize(unsigned char hash[OUTPUT_SIZE]) {
-        unsigned char buf[CSHA256::OUTPUT_SIZE];
-        sha.Finalize(buf);
-        sha.Reset().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);
+        unsigned char buf[CSHA256::OUTPUT_SIZE];  // 存储hash结果
+        sha.Finalize(buf);                        // 完成第一次SHA256计算
+        sha.Reset().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);  // 重置后，使用第一次的结果作为输入，再进行一个SHA256，得到SHA256d的最终结果
     }
 
+    // 写入待hash的数据
     CHash256& Write(const unsigned char *data, size_t len) {
         sha.Write(data, len);
         return *this;
     }
 
+    // 重置类的实例（使用同一CHash256的实例进行多次SHA256d计算前，需要先使用本方法重置）
     CHash256& Reset() {
         sha.Reset();
         return *this;
     }
 };
 
-/** A hasher class for Bitcoin's 160-bit hash (SHA-256 + RIPEMD-160). */
+/** A hasher class for Bitcoin's 160-bit hash (SHA-256 + RIPEMD-160).
+*   封装了比特币 160-bit 哈希算法的类型
+*   Hash160(x) = RIPEMD160(SHA256(x))
+*/
 class CHash160 {
 private:
-    CSHA256 sha;
+    CSHA256 sha;    // 定义于`crypto/ripemd160.h`中
 public:
     static const size_t OUTPUT_SIZE = CRIPEMD160::OUTPUT_SIZE;
 
+    // 完成HASH映射，需配合Write()函数使用
     void Finalize(unsigned char hash[OUTPUT_SIZE]) {
-        unsigned char buf[CSHA256::OUTPUT_SIZE];
-        sha.Finalize(buf);
-        CRIPEMD160().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);
+        unsigned char buf[CSHA256::OUTPUT_SIZE];  // 存储hash结果
+        sha.Finalize(buf);                        // 完成第一次SHA256计算
+        CRIPEMD160().Write(buf, CSHA256::OUTPUT_SIZE).Finalize(hash);  // 重置后，使用第一次的结果作为输入，再进行一个RIPEMD160，得到Hash160的最终结果
     }
 
+    // 写入待hash的数据
     CHash160& Write(const unsigned char *data, size_t len) {
         sha.Write(data, len);
         return *this;
     }
 
+    // 重置类的实例（使用同一CHash256的实例进行多次SHA256d计算前，需要先使用本方法重置）
     CHash160& Reset() {
         sha.Reset();
         return *this;
     }
 };
 
-/** Compute the 256-bit hash of an object. */
+/** Compute the 256-bit hash of an object.
+*   该函数提供了计算SHA256d的简便方法。否则你需要人为构造CHash256的实例，并调用Write()和Finalize()函数
+*   注意！ SHA256d(x) = SHA256(SHA256(x))
+*/
 template<typename T1>
 inline uint256 Hash(const T1 pbegin, const T1 pend)
 {
@@ -88,7 +104,10 @@ inline uint256 Hash(const T1 p1begin, const T1 p1end,
     return result;
 }
 
-/** Compute the 160-bit hash an object. */
+/** Compute the 160-bit hash an object.
+*   该函数提供了计算Hash160的简便方法。否则你需要人为构造CHash160的实例，并调用Write()和Finalize()函数
+*   注意！ Hash160(x) = RIPEMD160(SHA256(x))
+*/
 template<typename T1>
 inline uint160 Hash160(const T1 pbegin, const T1 pend)
 {

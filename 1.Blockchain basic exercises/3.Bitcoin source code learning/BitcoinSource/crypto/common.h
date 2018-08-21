@@ -69,7 +69,7 @@ uint64_t static inline ReadBE64(const unsigned char* ptr)
 
 void static inline WriteBE32(unsigned char* ptr, uint32_t x)
 {
-    uint32_t v = htobe32(x);
+    uint32_t v = htobe32(x);  // 四字节整数的大小端转换
     memcpy(ptr, (char*)&v, 4);
 }
 

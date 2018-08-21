@@ -28,24 +28,25 @@ void base_blob<BITS>::SetHex(const char* psz)
 {
     memset(data, 0, sizeof(data));
 
-    // skip leading spaces
-    while (isspace(*psz))
+    // skip leading spaces 跳过头部的空白字符
+    while (isspace(*psz))  // isspace判断参数是否为空白字符(' '、'\t'、'\r'、'\n'、'\v'或'\f')
         psz++;
 
-    // skip 0x
+    // skip 0x (不能排除调用者提供的16进制字符串有0x前缀)
     if (psz[0] == '0' && tolower(psz[1]) == 'x')
         psz += 2;
 
     // hex string to uint
     const char* pbegin = psz;
-    while (::HexDigit(*psz) != -1)
+    // 将psz指向字符串的末尾（注意：比特币哈希值的16进制字符串为小端实现）
+    while (::HexDigit(*psz) != -1) // HexDigit返回字符char对应的16进制数字，非16进制数字(0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f)返回-1
         psz++;
     psz--;
     unsigned char* p1 = (unsigned char*)data;
     unsigned char* pend = p1 + WIDTH;
     while (psz >= pbegin && p1 < pend) {
         *p1 = ::HexDigit(*psz--);
-        if (psz >= pbegin) {
+        if (psz >= pbegin) {  // 检查下一个字符是否存在(确保16进制字符串成对出现)
             *p1 |= ((unsigned char)::HexDigit(*psz--) << 4);
             p1++;
         }

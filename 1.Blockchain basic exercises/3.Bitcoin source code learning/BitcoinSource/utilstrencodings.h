@@ -37,7 +37,10 @@ enum SafeChars
 std::string SanitizeString(const std::string& str, int rule = SAFE_CHARS_DEFAULT);
 std::vector<unsigned char> ParseHex(const char* psz);
 std::vector<unsigned char> ParseHex(const std::string& str);
+
+//返回字符char对应的16进制数字，非16进制数字(0,1,2,3,4,5,6,7,8,9,a,b,c,d,e,f)返回-1
 signed char HexDigit(char c);
+
 /* Returns true if each character in str is a hex character, and has an even
  * number of hex digits.*/
 bool IsHex(const std::string& str);
@@ -112,14 +115,15 @@ std::string HexStr(const T itbegin, const T itend, bool fSpaces=false)
     std::string rv;
     static const char hexmap[16] = { '0', '1', '2', '3', '4', '5', '6', '7',
                                      '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+    // 为十六进制字符串分配空间，一个字节转换为两个十六进制字符，加上可能存在空格间隔符，因此*3
     rv.reserve((itend-itbegin)*3);
     for(T it = itbegin; it < itend; ++it)
     {
         unsigned char val = (unsigned char)(*it);
-        if(fSpaces && it != itbegin)
+        if(fSpaces && it != itbegin)  // 判断是否需要添加空格间隔符
             rv.push_back(' ');
-        rv.push_back(hexmap[val>>4]);
-        rv.push_back(hexmap[val&15]);
+        rv.push_back(hexmap[val>>4]);  // 取前4位
+        rv.push_back(hexmap[val&15]);  // 取后4位
     }
 
     return rv;
