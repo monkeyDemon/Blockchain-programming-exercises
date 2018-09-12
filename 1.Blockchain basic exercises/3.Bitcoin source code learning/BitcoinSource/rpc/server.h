@@ -126,8 +126,10 @@ void RPCUnsetTimerInterface(RPCTimerInterface *iface);
  */
 void RPCRunLater(const std::string& name, std::function<void(void)> func, int64_t nSeconds);
 
+// 用于指向RPC命令具体执行函数的回调函数类型
 typedef UniValue(*rpcfn_type)(const JSONRPCRequest& jsonRequest);
 
+// 封装RPC命令
 class CRPCCommand
 {
 public:
@@ -139,6 +141,7 @@ public:
 
 /**
  * Bitcoin RPC command dispatcher.
+ * 比特币RPC命令调度员
  */
 class CRPCTable
 {
